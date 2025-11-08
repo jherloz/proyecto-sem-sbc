@@ -5,6 +5,7 @@ from wx import (
 	EVT_BUTTON,
 	EXPAND,
 	ID_OK,
+	OK, 
 	TE_PASSWORD,
 	Button,
 	CommandEvent,
@@ -19,13 +20,17 @@ from wx import (
 	StaticText,
 	TextCtrl,
 	Window,
+	MessageBox,
+	ICON_ERROR,
 )
 
 
-from user import log_in
+from user import log_in, User
 
 
 class DialogLogin(Dialog):
+	m_user: User | None = None
+
 	def __init__(self, parent: Window):
 		super().__init__(parent, ID_ANY, "Iniciar Sesión")
 
@@ -69,6 +74,7 @@ class DialogLogin(Dialog):
 		self.m_textCtrl_password.SetWindowStyleFlag(TE_PASSWORD)
 
 		self.SetSizerAndFit(gbSizer)
+		self.CenterOnParent()
 
 		self.Bind(EVT_BUTTON, self.OnButtonClick)
 
@@ -80,6 +86,16 @@ class DialogLogin(Dialog):
 			model = log_in(user, password)
 
 			if model:
+				self.m_user = model
 				self.EndModal(ID_OK)
+			else:
+				MessageBox(
+					"Usuario o contraseña incorrectos.",
+					"Error de Inicio de Sesión",
+					ICON_ERROR | OK,
+				)
 
 		event.Skip()
+
+	def GetUser(self) -> User | None:
+		return self.m_user

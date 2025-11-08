@@ -19,10 +19,10 @@ from wx.dataview import (
 )
 
 
-from disease import Disease, get_diseases
+from sign import Sign, get_signs
 
 
-class CRUDDisease(Panel):
+class CRUDSign(Panel):
 	def __init__(self, parent: Window):
 		super().__init__(parent)
 
@@ -62,7 +62,7 @@ class CRUDDisease(Panel):
 		self.m_dataview.DeleteAllItems()
 
 	def UpdateRows(self):
-		rows = get_diseases()
+		rows = get_signs()
 		self.ClearRows()
 		for i in rows:
 			self.m_dataview.AppendItem(i.to_list())
@@ -73,13 +73,13 @@ class CRUDDisease(Panel):
 		value = event.GetValue()
 		aidi = int(self.m_dataview.GetValue(row, 0))
 
-		disease = Disease()
-		disease.select_by_id(aidi)
+		sign = Sign()
+		sign.select_by_id(aidi)
 
 		if col == 1:
-			disease.update_name(value)
+			sign.update_name(value)
 		elif col == 2:
-			disease.update_active(int(value))
+			sign.update_active(int(value))
 
 		self.UpdateRows()
 		event.Skip()

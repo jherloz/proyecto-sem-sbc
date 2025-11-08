@@ -31,45 +31,45 @@ class CRUDPatient(Panel):
 
 		self.m_dataview.AppendTextColumn(
 			"ID",
-			DATAVIEW_CELL_INERT,
-			COL_WIDTH_AUTOSIZE,
-			ALIGN_LEFT,
-			DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
+			width=COL_WIDTH_AUTOSIZE,
+			mode=DATAVIEW_CELL_INERT,
+			align=ALIGN_LEFT,
+			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
 		)
 		self.m_dataview.AppendTextColumn(
-			"Médico",
-			DATAVIEW_CELL_EDITABLE,
-			COL_WIDTH_AUTOSIZE,
-			ALIGN_LEFT,
-			DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
+			"Médico (ID)",
+			width=COL_WIDTH_AUTOSIZE,
+			mode=DATAVIEW_CELL_EDITABLE,
+			align=ALIGN_LEFT,
+			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
 		)
 		self.m_dataview.AppendTextColumn(
 			"Nombre",
-			DATAVIEW_CELL_EDITABLE,
-			COL_WIDTH_AUTOSIZE,
-			ALIGN_LEFT,
-			DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
+			width=150,
+			mode=DATAVIEW_CELL_EDITABLE,
+			align=ALIGN_LEFT,
+			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
 		)
 		self.m_dataview.AppendTextColumn(
 			"Apellido",
-			DATAVIEW_CELL_EDITABLE,
-			COL_WIDTH_AUTOSIZE,
-			ALIGN_LEFT,
-			DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
+			width=150,
+			mode=DATAVIEW_CELL_EDITABLE,
+			align=ALIGN_LEFT,
+			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
 		)
 		self.m_dataview.AppendTextColumn(
 			"CURP",
-			DATAVIEW_CELL_EDITABLE,
-			COL_WIDTH_AUTOSIZE,
-			ALIGN_LEFT,
-			DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
+			width=180,
+			mode=DATAVIEW_CELL_EDITABLE,
+			align=ALIGN_LEFT,
+			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
 		)
 		self.m_dataview.AppendToggleColumn(
 			"Activo",
-			DATAVIEW_CELL_ACTIVATABLE,
-			COL_WIDTH_AUTOSIZE,
-			ALIGN_LEFT,
-			DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
+			width=60,
+			mode=DATAVIEW_CELL_ACTIVATABLE,
+			align=ALIGN_LEFT,
+			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
 		)
 
 		sizer.Add(self.m_dataview, 1, EXPAND | ALL)
@@ -77,25 +77,24 @@ class CRUDPatient(Panel):
 		self.SetSizerAndFit(sizer)
 
 		self.Bind(EVT_DATAVIEW_ITEM_VALUE_CHANGED, self.OnItemEdit, self.m_dataview)
+		self.UpdateRows()
 
 	def ClearRows(self):
 		self.m_dataview.DeleteAllItems()
 
 	def UpdateRows(self):
 		rows = get_patients()
-
 		self.ClearRows()
-
 		for i in rows:
 			self.m_dataview.AppendItem(i.to_list())
 
 	def OnItemEdit(self, event: DataViewEvent):
 		row: int = self.m_dataview.ItemToRow(event.GetItem())
-		col: int = event.GetColumn()
-		aidi = self.m_dataview.GetValue(row, 0)
-		value = self.m_dataview.GetValue(row, col)
-		patient = Patient()
+		col: int = self.m_dataview.GetColumnIndex(event.GetColumn())
+		value = event.GetValue()
+		aidi = int(self.m_dataview.GetValue(row, 0))
 
+		patient = Patient()
 		patient.select_by_id(aidi)
 
 		if col == 1:
@@ -107,8 +106,7 @@ class CRUDPatient(Panel):
 		elif col == 4:
 			patient.update_curp(value)
 		elif col == 5:
-			patient.update_active(value)
+			patient.update_active(int(value))
 
 		self.UpdateRows()
-
 		event.Skip()

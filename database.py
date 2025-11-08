@@ -35,7 +35,7 @@ class Database:
 			"id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,"
 			"usuario VARCHAR(50) UNIQUE NOT NULL,"
 			"contrasena VARCHAR(50) NOT NULL,"
-			"rol INT UNSIGNED DEFAULT NULL,"
+			"rol INT UNSIGNED UNIQUE DEFAULT NULL," 
 			"activo TINYINT(1) NOT NULL DEFAULT 1,"
 			"FOREIGN KEY(rol) REFERENCES medico(id)"
 			") CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
@@ -62,10 +62,52 @@ class Database:
 		)
 
 		Database.execute(
+			"CREATE TABLE IF NOT EXISTS signo("
+			"id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,"
+			"nombre VARCHAR(50) UNIQUE NOT NULL,"
+			"activo TINYINT(1) NOT NULL DEFAULT 1"
+			") CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+		)
+
+		Database.execute(
 			"CREATE TABLE IF NOT EXISTS enfermedad("
 			"id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,"
 			"nombre VARCHAR(50) UNIQUE NOT NULL,"
 			"activo TINYINT(1) NOT NULL DEFAULT 1"
+			") CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+		)
+
+		Database.execute(
+			"CREATE TABLE IF NOT EXISTS enfermedad_sintoma("
+			"enfermedad_id INT UNSIGNED NOT NULL,"
+			"sintoma_id INT UNSIGNED NOT NULL,"
+			"PRIMARY KEY (enfermedad_id, sintoma_id),"
+			"FOREIGN KEY(enfermedad_id) REFERENCES enfermedad(id) ON DELETE CASCADE,"
+			"FOREIGN KEY(sintoma_id) REFERENCES sintoma(id) ON DELETE CASCADE"
+			") CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+		)
+
+		Database.execute(
+			"CREATE TABLE IF NOT EXISTS enfermedad_signo("
+			"enfermedad_id INT UNSIGNED NOT NULL,"
+			"signo_id INT UNSIGNED NOT NULL,"
+			"PRIMARY KEY (enfermedad_id, signo_id),"
+			"FOREIGN KEY(enfermedad_id) REFERENCES enfermedad(id) ON DELETE CASCADE,"
+			"FOREIGN KEY(signo_id) REFERENCES signo(id) ON DELETE CASCADE"
+			") CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+		)
+
+		Database.execute(
+			"CREATE TABLE IF NOT EXISTS diagnostico("
+			"id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,"
+			"paciente_id INT UNSIGNED NOT NULL,"
+			"medico_id INT UNSIGNED NOT NULL,"
+			"enfermedad_id INT UNSIGNED NOT NULL,"
+			"tratamiento TEXT,"
+			"fecha DATETIME DEFAULT CURRENT_TIMESTAMP,"
+			"FOREIGN KEY(paciente_id) REFERENCES paciente(id),"
+			"FOREIGN KEY(medico_id) REFERENCES medico(id),"
+			"FOREIGN KEY(enfermedad_id) REFERENCES enfermedad(id)"
 			") CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 		)
 
@@ -85,3 +127,7 @@ class Database:
 	@staticmethod
 	def fetchall():
 		return Database.m_cursor.fetchall()
+
+	@staticmethod
+	def last_insert_id() -> int:
+		return Database.m_conn.insert_id()

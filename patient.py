@@ -23,8 +23,8 @@ class Patient:
 
 	def insert(self):
 		Database.execute(
-			"INSERT INTO paciente(nombre, apellido, curp) VALUES(%s, %s, %s);",
-			[self.m_name, self.m_lastname, self.m_curp],
+			"INSERT INTO paciente(medico, nombre, apellido, curp) VALUES(%s, %s, %s, %s);",
+			[self.m_medic, self.m_name, self.m_lastname, self.m_curp],
 		)
 
 	def select_by_id(self, aidi: int):
@@ -51,6 +51,9 @@ class Patient:
 			self.m_curp,
 			bool(self.m_active),
 		]
+	
+	def get_full_name(self) -> str:
+		return f"{self.m_name} {self.m_lastname}"
 
 	def update_medic(self, medic: int):
 		Database.execute(
@@ -97,6 +100,17 @@ def get_patients() -> list[Patient]:
 	patients: list[Patient] = []
 
 	Database.execute("SELECT * FROM paciente;")
+
+	for i in Database.fetchall():
+		patients.append(dict_to_patient(i))
+
+	return patients
+
+#Obtener pacientes solo del médico actual
+def get_patients_by_medic(medic_id: int) -> list[Patient]:
+	patients: list[Patient] = []
+
+	Database.execute("SELECT * FROM paciente WHERE medico=%s;", [medic_id])
 
 	for i in Database.fetchall():
 		patients.append(dict_to_patient(i))

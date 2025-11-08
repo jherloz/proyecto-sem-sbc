@@ -31,24 +31,24 @@ class CRUDSymptom(Panel):
 
 		self.m_dataview.AppendTextColumn(
 			"ID",
-			DATAVIEW_CELL_INERT,
-			COL_WIDTH_AUTOSIZE,
-			ALIGN_LEFT,
-			DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
+			width=COL_WIDTH_AUTOSIZE,
+			mode=DATAVIEW_CELL_INERT,
+			align=ALIGN_LEFT,
+			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
 		)
 		self.m_dataview.AppendTextColumn(
 			"Nombre",
-			DATAVIEW_CELL_EDITABLE,
-			COL_WIDTH_AUTOSIZE,
-			ALIGN_LEFT,
-			DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
+			width=300,
+			mode=DATAVIEW_CELL_EDITABLE,
+			align=ALIGN_LEFT,
+			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
 		)
 		self.m_dataview.AppendToggleColumn(
 			"Activo",
-			DATAVIEW_CELL_ACTIVATABLE,
-			COL_WIDTH_AUTOSIZE,
-			ALIGN_LEFT,
-			DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
+			width=60,
+			mode=DATAVIEW_CELL_ACTIVATABLE,
+			align=ALIGN_LEFT,
+			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
 		)
 
 		sizer.Add(self.m_dataview, 1, EXPAND | ALL)
@@ -56,32 +56,30 @@ class CRUDSymptom(Panel):
 		self.SetSizerAndFit(sizer)
 
 		self.Bind(EVT_DATAVIEW_ITEM_VALUE_CHANGED, self.OnItemEdit, self.m_dataview)
+		self.UpdateRows()
 
 	def ClearRows(self):
 		self.m_dataview.DeleteAllItems()
 
 	def UpdateRows(self):
 		rows = get_symptoms()
-
 		self.ClearRows()
-
 		for i in rows:
 			self.m_dataview.AppendItem(i.to_list())
 
 	def OnItemEdit(self, event: DataViewEvent):
 		row: int = self.m_dataview.ItemToRow(event.GetItem())
-		col: int = event.GetColumn()
-		aidi = self.m_dataview.GetValue(row, 0)
-		value = self.m_dataview.GetValue(row, col)
-		symptom = Symptom()
+		col: int = self.m_dataview.GetColumnIndex(event.GetColumn())
+		value = event.GetValue()
+		aidi = int(self.m_dataview.GetValue(row, 0))
 
+		symptom = Symptom()
 		symptom.select_by_id(aidi)
 
 		if col == 1:
 			symptom.update_name(value)
 		elif col == 2:
-			symptom.update_active(value)
+			symptom.update_active(int(value))
 
 		self.UpdateRows()
-
 		event.Skip()

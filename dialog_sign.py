@@ -24,26 +24,16 @@ from wx import (
 )
 
 
-from patient import Patient
+from sign import Sign
 
 
-class DialogPatient(Dialog):
-	m_medic_id: int # ID del médico que crea el paciente
-
-	def __init__(self, parent: Window, medic_id: int):
-		super().__init__(parent, ID_ANY, "Agregar Paciente")
-		
-		self.m_medic_id = medic_id # Almacena el ID
+class DialogSign(Dialog):
+	def __init__(self, parent: Window):
+		super().__init__(parent, ID_ANY, "Agregar Signo")
 
 		gbSizer = GridBagSizer()
 		sizer = BoxSizer()
 		self.m_textCtrl_name = TextCtrl(
-			self, ID_ANY, "", DefaultPosition, Size(250, -1)
-		)
-		self.m_textCtrl_lastname = TextCtrl(
-			self, ID_ANY, "", DefaultPosition, Size(250, -1)
-		)
-		self.m_textCtrl_curp = TextCtrl(
 			self, ID_ANY, "", DefaultPosition, Size(250, -1)
 		)
 		self.m_button_ok = Button(self, ID_ANY, "Agregar")
@@ -60,28 +50,8 @@ class DialogPatient(Dialog):
 			self.m_textCtrl_name, GBPosition(0, 1), DefaultSpan, EXPAND | ALL, 5
 		)
 		gbSizer.Add(
-			StaticText(self, ID_ANY, "Apellido:"),
-			GBPosition(1, 0),
-			DefaultSpan,
-			ALL | ALIGN_CENTRE_VERTICAL,
-			5,
-		)
-		gbSizer.Add(
-			self.m_textCtrl_lastname, GBPosition(1, 1), DefaultSpan, EXPAND | ALL, 5
-		)
-		gbSizer.Add(
-			StaticText(self, ID_ANY, "CURP:"),
-			GBPosition(2, 0),
-			DefaultSpan,
-			ALL | ALIGN_CENTRE_VERTICAL,
-			5,
-		)
-		gbSizer.Add(
-			self.m_textCtrl_curp, GBPosition(2, 1), DefaultSpan, EXPAND | ALL, 5
-		)
-		gbSizer.Add(
 			sizer,
-			GBPosition(3, 0),
+			GBPosition(1, 0),
 			GBSpan(1, 2),
 			EXPAND | ALL | ALIGN_CENTRE_HORIZONTAL,
 			5,
@@ -96,16 +66,10 @@ class DialogPatient(Dialog):
 
 	def OnButtonClick(self, event: CommandEvent):
 		if event.GetId() == self.m_button_ok.GetId():
-			patient = Patient(
-				0,
-				self.m_medic_id, # Usa el ID del médico logueado
-				self.m_textCtrl_name.GetValue(),
-				self.m_textCtrl_lastname.GetValue(),
-				self.m_textCtrl_curp.GetValue(),
-			)
+			sign = Sign(0, self.m_textCtrl_name.GetValue())
 
-			if patient:
-				patient.insert()
+			if sign:
+				sign.insert()
 				self.EndModal(ID_OK)
 
 		if event.GetId() == self.m_button_cancel.GetId():

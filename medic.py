@@ -21,11 +21,14 @@ class Medic:
 		self.m_certificate: str = certificate
 		self.m_active: int = active
 
-	def insert(self):
+	def insert(self) -> int:
+		"""Inserta un médico y devuelve el ID del nuevo registro."""
 		Database.execute(
 			"INSERT INTO medico(nombre, apellido, especialidad, cedula) VALUES(%s, %s, %s, %s);",
 			[self.m_name, self.m_latname, self.m_specialty, self.m_certificate],
 		)
+		self.m_id = Database.last_insert_id()
+		return self.m_id
 
 	def select_by_id(self, aidi: int):
 		Database.execute("SELECT * FROM medico WHERE id=%s;", [aidi])

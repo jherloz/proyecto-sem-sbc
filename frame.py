@@ -10,6 +10,7 @@ from wx import (
 	GBSpan,
 	GridBagSizer,
 	ID_ANY,
+	ID_OK,
 	MenuEvent,
 )
 
@@ -17,15 +18,18 @@ from wx import (
 from database import Database
 from dialog_disease import DialogDisease
 from dialog_login import DialogLogin
-from dialog_medic import DialogMedic
 from dialog_patient import DialogPatient
 from dialog_symptom import DialogSymptom
+from dialog_sign import DialogSign
 from dialog_user import DialogUser
 from menubar import MenuBar
 from notebook import Notebook
+from user import User
 
 
 class Frame(wxFrame):
+	m_current_user: User | None = None
+
 	def __init__(self, title: str):
 		super().__init__(None, ID_ANY, title)
 
@@ -43,63 +47,88 @@ class Frame(wxFrame):
 		self.SetSize(848, 480)
 		self.SetMinSize(self.GetSize())
 
-		self.m_notebook.Show(True)
-
 		self.Bind(EVT_CLOSE, self.OnClose, self)
 		self.Bind(EVT_MENU, self.OnMenuItem)
+
+	def InitAppLogic(self):
+		self.ShowLoginDialog()
+
+	def ShowLoginDialog(self):
+		dialog = DialogLogin(self)
+
+		if dialog.ShowModal() == ID_OK:
+			self.m_current_user = dialog.GetUser()
+			if self.m_current_user:
+				self.m_current_user.select_by_id(self.m_current_user.m_id)
+				self.SetStatusText(f"Bienvenido, {self.m_current_user.m_user}")
+		else:
+			if not self.m_current_user:
+				self.Close()
+		
+		dialog.Destroy()
+		self.ApplyUserRole()
+
+	def ApplyUserRole(self):
+		"""Aplica los cambios de UI basados en el rol (Menús y Pestañas)."""
+		self.m_menuBar.UpdateRoles(self.m_current_user)
+		self.m_notebook.BuildPagesForRole(self.m_current_user)
+		self.Layout()
 
 	def OnClose(self, event: Event):
 		Database.close()
 		event.Skip()
 
 	def OnMenuItem(self, event: MenuEvent):
-		if event.GetId() == MenuBar.MENU_ITEM_USER_ADD:
+		evt_id = event.GetId()
+
+		if evt_id == MenuBar.MENU_ITEM_USER_ADD:
 			dialog = DialogUser(self)
-
-			dialog.ShowModal()
+			if dialog.ShowModal() == ID_OK:
+				# Comprobar si la página existe antes de actualizar
+				if self.m_notebook.m_page_crud:
+					self.m_notebook.m_page_crud.m_crud_user.UpdateRows()
 			dialog.Destroy()
 
-			self.m_notebook.m_page_crud.m_crud_user.UpdateRows()
+		elif evt_id == MenuBar.MENU_ITEM_USER_LOG_IN:
+			self.ShowLoginDialog()
 
-		if event.GetId() == MenuBar.MENU_ITEM_USER_LOG_IN:
-			dialog = DialogLogin(self)
+		elif evt_id == MenuBar.MENU_ITEM_USER_LOG_OUT:
+			self.m_current_user = None
+			self.SetStatusText("Sesión cerrada.")
+			self.ApplyUserRole() # Limpia las pestañas
+			self.ShowLoginDialog()
 
-			dialog.ShowModal()
-			dialog.Destroy()
+		elif evt_id == MenuBar.MENU_ITEM_PATIENT_ADD:
+			if self.m_current_user and self.m_current_user.is_medic():
+				medic_id = self.m_current_user.m_role
+				dialog = DialogPatient(self, medic_id)
+				if dialog.ShowModal() == ID_OK:
+					# Comprobar si las páginas existen
+					if self.m_notebook.m_page_crud:
+						self.m_notebook.m_page_crud.m_crud_patient.UpdateRows()
+					if self.m_notebook.m_page_diagnose:
+						self.m_notebook.m_page_diagnose.UpdatePatientList()
+				dialog.Destroy()
 
-		if event.GetId() == MenuBar.MENU_ITEM_USER_LOG_OUT:
-			pass
-
-		if event.GetId() == MenuBar.MENU_ITEM_PATIENT_ADD:
-			dialog = DialogPatient(self)
-
-			dialog.ShowModal()
-			dialog.Destroy()
-
-			self.m_notebook.m_page_crud.m_crud_patient.UpdateRows()
-
-		if event.GetId() == MenuBar.MENU_ITEM_MEDIC_ADD:
-			dialog = DialogMedic(self)
-
-			dialog.ShowModal()
-			dialog.Destroy()
-
-			self.m_notebook.m_page_crud.m_crud_medic.UpdateRows()
-
-		if event.GetId() == MenuBar.MENU_ITEM_SYMPTOM_ADD:
+		elif evt_id == MenuBar.MENU_ITEM_SYMPTOM_ADD:
 			dialog = DialogSymptom(self)
-
-			dialog.ShowModal()
+			if dialog.ShowModal() == ID_OK:
+				if self.m_notebook.m_page_crud:
+					self.m_notebook.m_page_crud.m_crud_symptom.UpdateRows()
+			dialog.Destroy()
+		
+		elif evt_id == MenuBar.MENU_ITEM_SIGN_ADD:
+			dialog = DialogSign(self)
+			if dialog.ShowModal() == ID_OK:
+				if self.m_notebook.m_page_crud:
+					self.m_notebook.m_page_crud.m_crud_sign.UpdateRows()
 			dialog.Destroy()
 
-			self.m_notebook.m_page_crud.m_crud_symptom.UpdateRows()
-
-		if event.GetId() == MenuBar.MENU_ITEM_DISEASE_ADD:
+		elif evt_id == MenuBar.MENU_ITEM_DISEASE_ADD:
 			dialog = DialogDisease(self)
-
-			dialog.ShowModal()
+			if dialog.ShowModal() == ID_OK:
+				if self.m_notebook.m_page_crud:
+					self.m_notebook.m_page_crud.m_crud_disease.UpdateRows()
 			dialog.Destroy()
-
-			self.m_notebook.m_page_crud.m_crud_disease.UpdateRows()
 
 		event.Skip()
