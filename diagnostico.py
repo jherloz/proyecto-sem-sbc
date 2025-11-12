@@ -98,3 +98,18 @@ def get_graph_data() -> dict[str, int]:
 	)
 	
 	return {row['nombre']: int(row['count']) for row in Database.fetchall()}
+
+
+def get_graph_data_by_patient(patient_id: int) -> dict[str, int]:
+    """Obtiene el conteo de enfermedades diagnosticadas para un paciente específico."""
+    Database.execute(
+        "SELECT e.nombre, COUNT(d.id) AS count "
+        "FROM diagnostico d "
+        "JOIN enfermedad e ON d.enfermedad_id = e.id "
+        "WHERE d.paciente_id = %s "
+        "GROUP BY e.nombre "
+        "ORDER BY count DESC;",
+        [patient_id],
+    )
+
+    return {row['nombre']: int(row['count']) for row in Database.fetchall()}

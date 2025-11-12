@@ -20,7 +20,7 @@ class App(wxApp):
 			wx.MessageBox(
 				f"Error fatal al conectar a la base de datos: {e}\nLa aplicación se cerrará.",
 				"Error de Base de Datos",
-				wx.ICON_ERROR | wx.ID_OK,
+				wx.ICON_ERROR | wx.OK,
 			)
 			return False 
 

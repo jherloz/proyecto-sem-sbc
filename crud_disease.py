@@ -1,85 +1,59 @@
-from wx import (
-	ALIGN_LEFT,
-	ALL,
-	COL_WIDTH_AUTOSIZE,
-	EXPAND,
-	BoxSizer,
-	Panel,
-	Window,
-)
+import wx
+from wx import Panel, BoxSizer, EXPAND, ALL, ID_ANY
 from wx.dataview import (
-	DATAVIEW_CELL_ACTIVATABLE,
-	DATAVIEW_CELL_EDITABLE,
-	DATAVIEW_CELL_INERT,
-	DATAVIEW_COL_RESIZABLE,
-	DATAVIEW_COL_SORTABLE,
-	EVT_DATAVIEW_ITEM_VALUE_CHANGED,
-	DataViewEvent,
-	DataViewListCtrl,
+    DataViewListCtrl,
+    DATAVIEW_CELL_EDITABLE,
+    DATAVIEW_CELL_INERT,
+    EVT_DATAVIEW_ITEM_VALUE_CHANGED,
 )
-
-
-from disease import Disease, get_diseases
+from disease import get_diseases, Disease
 
 
 class CRUDDisease(Panel):
-	def __init__(self, parent: Window):
-		super().__init__(parent)
+    def __init__(self, parent):
+        super().__init__(parent)
 
-		sizer = BoxSizer()
-		self.m_dataview = DataViewListCtrl(self)
+        sizer = BoxSizer()
+        self.m_dataview = DataViewListCtrl(self, ID_ANY, style=0)
 
-		self.m_dataview.AppendTextColumn(
-			"ID",
-			width=COL_WIDTH_AUTOSIZE,
-			mode=DATAVIEW_CELL_INERT,
-			align=ALIGN_LEFT,
-			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
-		)
-		self.m_dataview.AppendTextColumn(
-			"Nombre",
-			width=300,
-			mode=DATAVIEW_CELL_EDITABLE,
-			align=ALIGN_LEFT,
-			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
-		)
-		self.m_dataview.AppendToggleColumn(
-			"Activo",
-			width=60,
-			mode=DATAVIEW_CELL_ACTIVATABLE,
-			align=ALIGN_LEFT,
-			flags=DATAVIEW_COL_RESIZABLE | DATAVIEW_COL_SORTABLE,
-		)
+        self.m_dataview.AppendTextColumn("ID", width=60, mode=DATAVIEW_CELL_INERT)
+        self.m_dataview.AppendTextColumn("Nombre", width=250, mode=DATAVIEW_CELL_EDITABLE)
+        self.m_dataview.AppendToggleColumn("Activo", width=70)
 
-		sizer.Add(self.m_dataview, 1, EXPAND | ALL)
+        sizer.Add(self.m_dataview, 1, EXPAND | ALL, 5)
+        self.SetSizer(sizer)
 
-		self.SetSizerAndFit(sizer)
+        self.Bind(EVT_DATAVIEW_ITEM_VALUE_CHANGED, self.OnItemEdit, self.m_dataview)
+        self.UpdateRows()
 
-		self.Bind(EVT_DATAVIEW_ITEM_VALUE_CHANGED, self.OnItemEdit, self.m_dataview)
-		self.UpdateRows()
+    def UpdateRows(self):
+        self.m_dataview.DeleteAllItems()
+        for d in get_diseases():
+            self.m_dataview.AppendItem(d.to_list())
 
-	def ClearRows(self):
-		self.m_dataview.DeleteAllItems()
+    def OnItemEdit(self, event):
+        row = self.m_dataview.ItemToRow(event.GetItem())
+        col = event.GetColumn()
+        value = self.m_dataview.GetValue(row, col)
+        if value is None:
+            value = ""
 
-	def UpdateRows(self):
-		rows = get_diseases()
-		self.ClearRows()
-		for i in rows:
-			self.m_dataview.AppendItem(i.to_list())
+        disease_id = int(self.m_dataview.GetValue(row, 0))
+        disease = Disease()
+        disease.select_by_id(disease_id)
 
-	def OnItemEdit(self, event: DataViewEvent):
-		row: int = self.m_dataview.ItemToRow(event.GetItem())
-		col: int = self.m_dataview.GetColumnIndex(event.GetColumn())
-		value = event.GetValue()
-		aidi = int(self.m_dataview.GetValue(row, 0))
+        try:
+            if col == 1:
+                disease.update_name(value)
+            elif col == 2:
+                if value is not None:
+                    disease.update_active(1 if bool(value) else 0)
+        except Exception as e:
+            wx.MessageBox(
+                f"Error al actualizar:\n{e}",
+                "Error de Base de Datos",
+                wx.OK | wx.ICON_ERROR,
+            )
 
-		disease = Disease()
-		disease.select_by_id(aidi)
-
-		if col == 1:
-			disease.update_name(value)
-		elif col == 2:
-			disease.update_active(int(value))
-
-		self.UpdateRows()
-		event.Skip()
+        self.UpdateRows()
+        event.Skip()

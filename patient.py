@@ -1,118 +1,122 @@
 from typing import Any
-
-
 from database import Database
 
 
 class Patient:
-	def __init__(
-		self,
-		aidi: int = 0,
-		medic: int = 0,
-		name: str = "",
-		lastname: str = "",
-		curp: str = "",
-		active: int = 1,
-	):
-		self.m_id: int = aidi
-		self.m_medic: int = medic
-		self.m_name: str = name
-		self.m_lastname: str = lastname
-		self.m_curp: str = curp
-		self.m_active: int = active
+    def __init__(
+        self,
+        id: int = 0,
+        medico: int | None = None,
+        nombre: str = "",
+        apellido: str = "",
+        curp: str = "",
+        activo: int = 1,
+    ):
+        self.m_id: int = id
+        self.m_medico: int | None = medico
+        self.m_nombre: str = nombre
+        self.m_apellido: str = apellido
+        self.m_curp: str = curp
+        self.m_activo: int = activo
 
-	def insert(self):
-		Database.execute(
-			"INSERT INTO paciente(medico, nombre, apellido, curp) VALUES(%s, %s, %s, %s);",
-			[self.m_medic, self.m_name, self.m_lastname, self.m_curp],
-		)
+    # ----------------------------
+    # INSERTAR NUEVO PACIENTE
+    # ----------------------------
+    def insert(self):
+        Database.execute(
+            "INSERT INTO paciente (medico, nombre, apellido, curp, activo) VALUES (%s, %s, %s, %s, %s);",
+            [self.m_medico, self.m_nombre, self.m_apellido, self.m_curp, self.m_activo],
+        )
+        self.m_id = Database.last_insert_id()
 
-	def select_by_id(self, aidi: int):
-		Database.execute("SELECT * FROM paciente WHERE id=%s;", [aidi])
+    # ----------------------------
+    # ACTUALIZAR CAMPOS
+    # ----------------------------
+    def update_name(self, nombre: str):
+        Database.execute(
+            "UPDATE paciente SET nombre=%s WHERE id=%s;", [nombre, self.m_id]
+        )
+        self.m_nombre = nombre
 
-		res = Database.fetchone()
+    def update_lastname(self, apellido: str):
+        Database.execute(
+            "UPDATE paciente SET apellido=%s WHERE id=%s;", [apellido, self.m_id]
+        )
+        self.m_apellido = apellido
 
-		if res:
-			patient = dict_to_patient(res)
+    def update_curp(self, curp: str):
+        Database.execute(
+            "UPDATE paciente SET curp=%s WHERE id=%s;", [curp, self.m_id]
+        )
+        self.m_curp = curp
 
-			self.m_id = patient.m_id
-			self.m_medic = patient.m_medic
-			self.m_name = patient.m_name
-			self.m_lastname = patient.m_lastname
-			self.m_curp = patient.m_curp
-			self.m_active = patient.m_active
+    def update_active(self, activo: int):
+        Database.execute(
+            "UPDATE paciente SET activo=%s WHERE id=%s;", [activo, self.m_id]
+        )
+        self.m_activo = activo
 
-	def to_list(self) -> list[Any]:
-		return [
-			str(self.m_id),
-			str(self.m_medic),
-			self.m_name,
-			self.m_lastname,
-			self.m_curp,
-			bool(self.m_active),
-		]
-	
-	def get_full_name(self) -> str:
-		return f"{self.m_name} {self.m_lastname}"
+    # ----------------------------
+    # CONSULTAS
+    # ----------------------------
+    @staticmethod
+    def get_all() -> list["Patient"]:
+        Database.execute("SELECT * FROM paciente;")
+        results = Database.fetchall()
+        return [dict_to_patient(r) for r in results]
 
-	def update_medic(self, medic: int):
-		Database.execute(
-			"UPDATE paciente SET medico=%s WHERE id=%s;", [medic, self.m_id]
-		)
+    @staticmethod
+    def get_by_id(id_: int) -> "Patient | None":
+        Database.execute("SELECT * FROM paciente WHERE id=%s;", [id_])
+        r = Database.fetchone()
+        return dict_to_patient(r) if r else None
 
-	def update_name(self, name: str):
-		Database.execute(
-			"UPDATE paciente SET nombre=%s WHERE id=%s;", [name, self.m_id]
-		)
+    @staticmethod
+    def get_by_medic(medic_id: int) -> list["Patient"]:
+        Database.execute("SELECT * FROM paciente WHERE medico=%s;", [medic_id])
+        results = Database.fetchall()
+        return [dict_to_patient(r) for r in results]
 
-	def update_lastname(self, lastname: str):
-		Database.execute(
-			"UPDATE paciente SET apellido=%s WHERE id=%s;", [lastname, self.m_id]
-		)
+    # ----------------------------
+    # UTILIDAD
+    # ----------------------------
+    def get_full_name(self) -> str:
+        return f"{self.m_nombre} {self.m_apellido}".strip()
 
-	def update_curp(self, curp: str):
-		Database.execute("UPDATE paciente SET curp=%s WHERE id=%s;", [curp, self.m_id])
+    def to_list(self) -> list[Any]:
+        return [
+            str(self.m_id),
+            self.get_full_name(),
+            self.m_curp,
+            str(self.m_medico) if self.m_medico is not None else "",
+            bool(self.m_activo),
+        ]
 
-	def update_active(self, active: int):
-		Database.execute(
-			"UPDATE paciente SET activo=%s WHERE id=%s;", [active, self.m_id]
-		)
-
-	def __bool__(self):
-		if self.m_name and self.m_lastname and self.m_curp:
-			return True
-
-		return False
+    def __bool__(self):
+        return bool(self.m_nombre and self.m_apellido and self.m_curp)
 
 
-def dict_to_patient(patient: dict[str, Any]):
-	return Patient(
-		patient["id"],
-		patient["medico"],
-		patient["nombre"],
-		patient["apellido"],
-		patient["curp"],
-		patient["activo"],
-	)
+# ---------------------------------------------------------
+# FUNCIONES AUXILIARES
+# ---------------------------------------------------------
+def dict_to_patient(row: dict[str, Any]) -> Patient:
+    return Patient(
+        id=row["id"],
+        medico=row.get("medico"),
+        nombre=row["nombre"],
+        apellido=row["apellido"],
+        curp=row["curp"],
+        activo=row["activo"],
+    )
 
 
 def get_patients() -> list[Patient]:
-	patients: list[Patient] = []
+    Database.execute("SELECT * FROM paciente;")
+    results = Database.fetchall()
+    return [dict_to_patient(r) for r in results]
 
-	Database.execute("SELECT * FROM paciente;")
 
-	for i in Database.fetchall():
-		patients.append(dict_to_patient(i))
-
-	return patients
-
-#Obtener pacientes solo del médico actual
 def get_patients_by_medic(medic_id: int) -> list[Patient]:
-	patients: list[Patient] = []
-
-	Database.execute("SELECT * FROM paciente WHERE medico=%s;", [medic_id])
-
-	for i in Database.fetchall():
-		patients.append(dict_to_patient(i))
-
-	return patients
+    Database.execute("SELECT * FROM paciente WHERE medico=%s;", [medic_id])
+    results = Database.fetchall()
+    return [dict_to_patient(r) for r in results]
