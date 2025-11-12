@@ -14,7 +14,6 @@ from wx import (
 	MenuEvent,
 )
 
-
 from database import Database
 from dialog_disease import DialogDisease
 from dialog_login import DialogLogin
@@ -64,7 +63,7 @@ class Frame(wxFrame):
 		else:
 			if not self.m_current_user:
 				self.Close()
-		
+
 		dialog.Destroy()
 		self.ApplyUserRole()
 
@@ -81,10 +80,12 @@ class Frame(wxFrame):
 	def OnMenuItem(self, event: MenuEvent):
 		evt_id = event.GetId()
 
+		# ---------------------------
+		# USUARIOS
+		# ---------------------------
 		if evt_id == MenuBar.MENU_ITEM_USER_ADD:
 			dialog = DialogUser(self)
 			if dialog.ShowModal() == ID_OK:
-				# Comprobar si la página existe antes de actualizar
 				if self.m_notebook.m_page_crud:
 					self.m_notebook.m_page_crud.m_crud_user.UpdateRows()
 			dialog.Destroy()
@@ -95,28 +96,41 @@ class Frame(wxFrame):
 		elif evt_id == MenuBar.MENU_ITEM_USER_LOG_OUT:
 			self.m_current_user = None
 			self.SetStatusText("Sesión cerrada.")
-			self.ApplyUserRole() # Limpia las pestañas
+			self.ApplyUserRole()
 			self.ShowLoginDialog()
 
+		# ---------------------------
+		# PACIENTES
+		# ---------------------------
 		elif evt_id == MenuBar.MENU_ITEM_PATIENT_ADD:
 			if self.m_current_user and self.m_current_user.is_medic():
 				medic_id = self.m_current_user.m_role
 				dialog = DialogPatient(self, medic_id)
 				if dialog.ShowModal() == ID_OK:
-					# Comprobar si las páginas existen
+					# Actualizar todas las páginas relevantes
 					if self.m_notebook.m_page_crud:
 						self.m_notebook.m_page_crud.m_crud_patient.UpdateRows()
 					if self.m_notebook.m_page_diagnose:
 						self.m_notebook.m_page_diagnose.UpdatePatientList()
+					if self.m_notebook.m_page_followup:
+						self.m_notebook.m_page_followup.UpdatePatientList()
+					if self.m_notebook.m_page_history:
+						self.m_notebook.m_page_history.UpdatePatientList()
 				dialog.Destroy()
 
+		# ---------------------------
+		# SÍNTOMAS
+		# ---------------------------
 		elif evt_id == MenuBar.MENU_ITEM_SYMPTOM_ADD:
 			dialog = DialogSymptom(self)
 			if dialog.ShowModal() == ID_OK:
 				if self.m_notebook.m_page_crud:
 					self.m_notebook.m_page_crud.m_crud_symptom.UpdateRows()
 			dialog.Destroy()
-		
+
+		# ---------------------------
+		# SIGNOS
+		# ---------------------------
 		elif evt_id == MenuBar.MENU_ITEM_SIGN_ADD:
 			dialog = DialogSign(self)
 			if dialog.ShowModal() == ID_OK:
@@ -124,6 +138,9 @@ class Frame(wxFrame):
 					self.m_notebook.m_page_crud.m_crud_sign.UpdateRows()
 			dialog.Destroy()
 
+		# ---------------------------
+		# ENFERMEDADES
+		# ---------------------------
 		elif evt_id == MenuBar.MENU_ITEM_DISEASE_ADD:
 			dialog = DialogDisease(self)
 			if dialog.ShowModal() == ID_OK:

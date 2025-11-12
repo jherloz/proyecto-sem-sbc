@@ -1,4 +1,4 @@
-from typing import Any  # <-- ESTA LÍNEA ES LA CORRECCIÓN
+from typing import Any 
 from disease import Disease, get_diseases
 
 
@@ -41,7 +41,7 @@ class InferenceEngine:
 
 			# Si hay al menos una coincidencia, la añadimos
 			if total_matches > 0:
-				# Calculamos el "score"
+				# Calculamos la puntuación
 				score = total_matches / total_disease_factors
 
 				results.append(
@@ -53,5 +53,5 @@ class InferenceEngine:
 					}
 				)
 
-		# Devolvemos la lista ordenada de mayor a menor score
+		# Devolvemos la lista ordenada
 		return sorted(results, key=lambda x: x["score"], reverse=True)
